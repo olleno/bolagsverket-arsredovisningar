@@ -1,0 +1,49 @@
+name: text-ur-arsredovisningar
+# Plockar ut löptexten ur utvalda årsredovisningar. Startas bara för hand.
+# Resultatet läggs som en artefakt som sparas en dag; inget skrivs till repot.
+on:
+  workflow_dispatch:
+    inputs:
+      lista:
+        description: "orgnr_bokslutsdatum, mellanslagsseparerade"
+        required: true
+permissions:
+  contents: read
+env:
+  B: https://vardefulla-datamangder.bolagsverket.se
+jobs:
+  text:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hitta vilka bulkfiler som behövs
+        run: |
+          echo "${{ inputs.lista }}" | tr ' ' '\n' | grep . | sort -u > vill.txt
+          echo "önskade: $(wc -l < vill.txt)"
+          : > behov.txt
+          for f in data/ar/*.csv.gz; do
+            zcat "$f" | awk -F, 'NR>1{print $1"_"$2}' | grep -Fxf vill.txt >/dev/null && echo "$f" >> behov.txt || true
+          done
+          echo "bulkfiler: $(wc -l < behov.txt)"
+      - name: Hämta och plocka ut text
+        run: |
+          mkdir -p ut
+          hamta() { for i in $(seq 1 12); do curl -sSL -C - --retry 5 --retry-all-errors --connect-timeout 30 -o "$2" "$1" && return 0; sleep 5; done; return 1; }
+          export -f hamta
+          jobb() {
+            f=$1; b=$(basename "$f" .csv.gz); ar=${b%%_*}; rest=${b#*_}
+            z="tmp_$b.zip"
+            if hamta "$B/arsredovisningar-bulkfiler/arsredovisningar/$ar/$rest.zip" "$z" && unzip -tq "$z" >/dev/null; then
+              python3 text_ur_ar.py "$z" vill.txt ut
+            else echo "MISSLYCKADES $b"; fi
+            rm -f "$z"
+          }
+          export -f jobb
+          xargs -P 4 -I{} bash -c 'jobb {}' < behov.txt
+          echo "texter: $(ls ut | wc -l)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: texter
+          path: ut/
+          retention-days: 1
