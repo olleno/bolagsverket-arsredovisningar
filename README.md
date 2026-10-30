@@ -2,6 +2,7 @@
 
 Hämtar Bolagsverkets öppna årsredovisningsdata (värdefulla datamängder, `vardefulla-datamangder.bolagsverket.se`) och gör om varje årsredovisning till en rad med nyckeltal för innevarande och föregående år.
 
+- `data/ar2/<år>_<vecka>_<del>.csv.gz` (version 2, ersätter `data/ar/`: samma nyckeltal plus ägartillskott och räknade textmönster)
 - `data/ar/<år>_<vecka>_<del>.csv.gz` – en fil per del av Bolagsverkets bulkfiler. En rad per årsredovisning: organisationsnummer, bokslutsdatum, inlämningsmånad och 23 nyckeltal (omsättning, resultat, tillgångar, eget kapital, skulder, anställda m.m.).
 - `data/status_ab.csv.gz` – aktiebolagens status ur Bolagsverkets registerfil (registrerings- och avregistreringsdatum, orsak, pågående förfarande).
 - `data/SAMMANFATTNING.txt` – vad som är hämtat.

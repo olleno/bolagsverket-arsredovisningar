@@ -69,6 +69,18 @@ def las(xhtml):
         v = tal(m.group(2), attr('scale', at), attr('sign', at))
         if v is not None and (namn, d) not in ut:
             ut[(namn, d)] = v
+    # Ägartillskott: alla numeriska poster vars namn innehåller 'agartillskott', summerade per datum
+    tillskott = {}
+    for m in RE_NF.finditer(xhtml):
+        at = m.group(1)
+        namn = (attr('name', at) or '').split(':')[-1].lower()
+        if 'agartillskott' not in namn:
+            continue
+        d = ctx.get(attr('contextRef', at) or '')
+        v = tal(m.group(2), attr('scale', at), attr('sign', at))
+        if d and v is not None:
+            tillskott[d] = tillskott.get(d, 0.0) + abs(v)
+    ut[('_tillskott', None)] = tillskott
     # Enkla icke-numeriska flaggor
     flaggor = {'revisor': 0, 'fortsatt_drift': 0, 'kontrollbalans': 0}
     for m in RE_NN.finditer(xhtml):
@@ -84,6 +96,20 @@ def las(xhtml):
         flaggor['kontrollbalans'] = 1
     if 'fortsatt drift' in low or 'väsentlig osäkerhet' in low:
         flaggor['fortsatt_drift'] = 1
+    # Textmönster från CRISPR-läsningen (okt 2026), räknade på löptexten
+    t = re.sub(r'<[^>]+>', ' ', low)
+    t = re.sub(r'\s+', ' ', t)
+    MON = {
+        'txt_agartillskott': r'aktieägartillskott|villkorat tillskott|ovillkorat tillskott|tillskott från ägar',
+        'txt_personligt_ansvar': r'personlig[t]? (betalnings)?ansvar',
+        'txt_optimism': r'optimistisk|ljus framtid|ser (mycket )?positivt på|ser fram emot|goda förutsättningar|stark tillväxt|positiv utveckling|tror på',
+        'txt_nedgang': r'minskad efterfrågan|tappat|förlorat|förlorade|lägre försäljning|minskad omsättning|vikande|kundförlust|svag marknad',
+        'txt_aterstallt': r'återställ',
+        'txt_rekonstruktion': r'rekonstruktion|ackord',
+    }
+    for k, p in MON.items():
+        flaggor[k] = len(re.findall(p, t))
+    flaggor['txt_langd'] = len(t)
     return ut, flaggor
 
 
@@ -109,6 +135,7 @@ def main(src, manad, utfil):
                 trasiga += 1
                 continue
             v, fl = las(xhtml)
+            tillskott = v.pop(('_tillskott', None), {})
             datum = sorted({d for (_, d) in v}, reverse=True)
             if not datum:
                 continue
@@ -122,6 +149,8 @@ def main(src, manad, utfil):
             for f in FALT:
                 rad[f] = v.get((f, nu), '')
                 rad[f + '_f'] = v.get((f, forra), '') if forra else ''
+            rad['Agartillskott'] = tillskott.get(nu, '')
+            rad['Agartillskott_f'] = tillskott.get(forra, '') if forra else ''
             rad.update(fl)
             rader.append(rad)
     if not rader:

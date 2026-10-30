@@ -1,7 +1,7 @@
 name: hamta-arsredovisningar
 # Publikt repo = GitHubs maskiner är gratis här. Startas för hand eller en gång i veckan (Bolagsverket
 # lägger ut nya filer veckovis). ALDRIG vid push: förut startade varje ändring om hela hämtningen.
-# Redan hämtade delar (data/ar/*.csv.gz) hoppas över, så en körning tar bara det nya.
+# Redan hämtade delar (data/ar2/*.csv.gz) hoppas över. data/ar2 = parserversion 2 (okt 2026) med ägartillskott och textmönster.
 on:
   workflow_dispatch:
   schedule:
@@ -43,7 +43,7 @@ jobs:
             for key in $(grep "arsredovisningar/${{ matrix.ar }}/${v}_" alla.txt); do
               del=$(basename "$key" .zip | cut -d_ -f2)
               namn="${{ matrix.ar }}_${v}_$del.csv"
-              if [ -f "data/ar/$namn.gz" ]; then continue; fi
+              if [ -f "data/ar2/$namn.gz" ]; then continue; fi
               if [ $(( $(date +%s) - START )) -gt 18000 ]; then echo "tidsbudget slut"; break 2; fi
               rm -f del.zip
               if hamta "$B/arsredovisningar-bulkfiler/$key" del.zip && unzip -tq del.zip >/dev/null; then
@@ -89,16 +89,16 @@ jobs:
           path: dl
       - name: Spara i repot
         run: |
-          mkdir -p data/ar data/fel
-          find dl -name '*.csv.gz' ! -name 'status_ab*' -exec cp {} data/ar/ \;
+          mkdir -p data/ar2 data/fel
+          find dl -name '*.csv.gz' ! -name 'status_ab*' -exec cp {} data/ar2/ \;
           find dl -name 'status_ab.csv.gz' -exec cp {} data/ \;
           find dl -name 'fel_*.txt' -exec cp {} data/fel/ \; || true
           {
             echo "Hamtad $(date -u +%F)"
-            echo "Manadsdelar: $(ls data/ar | wc -l)"
-            echo "Arsredovisningar: $(zcat data/ar/*.csv.gz | grep -vc '^orgnr')"
+            echo "Manadsdelar: $(ls data/ar2 | wc -l)"
+            echo "Arsredovisningar: $(zcat data/ar2/*.csv.gz | grep -vc '^orgnr')"
             echo "Misslyckade delar: $(cat data/fel/*.txt 2>/dev/null | wc -l)"
-            ls data/ar | cut -c1-4 | sort | uniq -c
+            ls data/ar2 | cut -c1-4 | sort | uniq -c
           } > data/SAMMANFATTNING.txt
           cat data/SAMMANFATTNING.txt
           git config user.name hamtning-bot; git config user.email bot@users.noreply.github.com
