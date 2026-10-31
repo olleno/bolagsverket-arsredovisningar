@@ -19,7 +19,7 @@ jobs:
     timeout-minutes: 340
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 3
       matrix:
         ar: [2020, 2021, 2022, 2023, 2024]
         grupp: ['01 02 03 04','05 06 07 08','09 10 11 12','13 14 15 16','17 18 19 20','21 22 23 24','25 26 27 28','29 30 31 32','33 34 35 36','37 38 39 40','41 42 43 44','45 46 47 48','49 50 51 52 53']
@@ -28,15 +28,24 @@ jobs:
       - name: Hamta och lasa alla delar for manaden
         run: |
           mkdir -p ut
-          hamta() { for i in $(seq 1 12); do curl -sSL -C - --retry 5 --retry-all-errors --connect-timeout 30 -o "$2" "$1" && return 0; sleep 5; done; return 1; }
-          : > alla.txt; mk=""
-          for i in $(seq 1 50); do
-            enc=$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1],safe=""))' "$mk")
-            curl -gsS "$B/arsredovisningar-bulkfiler?prefix=arsredovisningar/&delimiter=%5C${mk:+&marker=$enc}" -o l.xml
-            grep -oE '<Key>[^<]+</Key>' l.xml | sed 's/<[^>]*>//g' >> alla.txt
-            grep -q '<IsTruncated>true' l.xml || break
-            mk=$(grep -oE '<NextMarker>[^<]+' l.xml | sed 's/<NextMarker>//')
-          done
+          hamta() { for i in $(seq 1 20); do curl -sSL -C - --retry 5 --retry-all-errors --connect-timeout 30 -o "$2" "$1" && return 0; sleep $((i*15)); done; return 1; }
+          lista() {
+            : > alla.txt; mk=""
+            for i in $(seq 1 50); do
+              enc=$(python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1],safe=""))' "$mk")
+              ok=0
+              for f in $(seq 1 8); do
+                curl -gsS --retry 5 --retry-all-errors --connect-timeout 30 "$B/arsredovisningar-bulkfiler?prefix=arsredovisningar/&delimiter=%5C${mk:+&marker=$enc}" -o l.xml && grep -q '<Key>' l.xml && { ok=1; break; }
+                sleep $((f*10))
+              done
+              [ $ok = 1 ] || return 1
+              grep -oE '<Key>[^<]+</Key>' l.xml | sed 's/<[^>]*>//g' >> alla.txt
+              grep -q '<IsTruncated>true' l.xml || break
+              mk=$(grep -oE '<NextMarker>[^<]+' l.xml | sed 's/<NextMarker>//')
+            done
+          }
+          lista || { echo "Kunde inte hämta fillistan"; exit 1; }
+          [ "$(grep -c "arsredovisningar/${{ matrix.ar }}/" alla.txt)" -gt 0 ] || { echo "Inga filer för året i listan"; exit 1; }
           echo "filer i listan: $(wc -l < alla.txt)"
           START=$(date +%s)
           for v in ${{ matrix.grupp }}; do
