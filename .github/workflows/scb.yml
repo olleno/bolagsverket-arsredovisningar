@@ -1,0 +1,30 @@
+name: scb-foretag
+# Hämtar SCB:s företagsfil (bransch, kommun, storlek, registreringar) från Bolagsverkets sida för värdefulla datamängder.
+on:
+  workflow_dispatch:
+    inputs:
+      titta:
+        description: "ja = spara bara rubrikrad och exempel"
+        default: "ja"
+permissions:
+  contents: write
+jobs:
+  scb:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          B=https://vardefulla-datamangder.bolagsverket.se
+          for i in $(seq 1 15); do curl -sSL -C - --retry 5 --retry-all-errors --connect-timeout 30 -o scb.zip "$B/scb/scb_bulkfil.zip" && unzip -tq scb.zip && break; sleep $((i*10)); done
+          unzip -l scb.zip
+          unzip -oq scb.zip -d scb
+          f=$(ls -S scb/* | head -1)
+          mkdir -p data
+          if [ "${{ inputs.titta }}" = "ja" ]; then
+            { wc -l "$f"; file "$f"; head -c 3000 "$f" | iconv -f latin1 -t utf-8 2>/dev/null || head -c 3000 "$f"; } > data/scb_titt.txt
+          else
+            python3 scb_urval.py "$f" data/scb_ab.csv.gz
+          fi
+          git config user.name obduktion-bot; git config user.email bot@users.noreply.github.com
+          git add data; git commit -m "SCB-företagsfil"; for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 5; done
