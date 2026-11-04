@@ -17,6 +17,13 @@ FALT = [
     'MedelantaletAnstallda', 'Personalkostnader', 'Aktiekapital', 'BalanseratResultat',
     'Kundfordringar', 'Leverantorsskulder', 'SkulderKreditinstitutKortfristiga',
     'SkulderKreditinstitutLangfristiga', 'Varulager', 'ForslagUtdelning',
+    # Version 3 (4 nov 2026): noterna – underlag för bedömningar (avskrivningar, nedskrivningar, uppskrivningar,
+    # bokslutsdispositioner). Namnen hämtade ur data/meta/uppgiftsnamn_2024.txt.
+    'AvskrivningarNedskrivningarMateriellaImmateriellaAnlaggningstillgangar',
+    'InventarierVerktygInstallationerAnskaffningsvarden', 'InventarierVerktygInstallationerForandringAvskrivningarAretsAvskrivningar',
+    'ByggnaderMarkAnskaffningsvarden', 'ByggnaderMarkForandringAvskrivningarAretsAvskrivningar',
+    'Uppskrivningsfond', 'Periodiseringsfonder', 'ForandringPeriodiseringsfond', 'AckumuleradeOveravskrivningar',
+    'NedskrivningarFinansiellaAnlaggningstillgangarKortfristigaPlaceringar',
 ]
 FALTSET = set(FALT)
 
@@ -81,6 +88,18 @@ def las(xhtml):
         if d and v is not None:
             tillskott[d] = tillskott.get(d, 0.0) + abs(v)
     ut[('_tillskott', None)] = tillskott
+    # Årets nedskrivningar i noterna (alla tillgångsslag), summerade per datum
+    nedskr = {}
+    for m in RE_NF.finditer(xhtml):
+        at = m.group(1)
+        namn = (attr('name', at) or '').split(':')[-1]
+        if 'NedskrivningarAretsNedskrivningar' not in namn:
+            continue
+        d = ctx.get(attr('contextRef', at) or '')
+        v = tal(m.group(2), attr('scale', at), attr('sign', at))
+        if d and v is not None:
+            nedskr[d] = nedskr.get(d, 0.0) + abs(v)
+    ut[('_nedskr', None)] = nedskr
     # Enkla icke-numeriska flaggor
     flaggor = {'revisor': 0, 'fortsatt_drift': 0, 'kontrollbalans': 0}
     for m in RE_NN.finditer(xhtml):
@@ -91,6 +110,17 @@ def las(xhtml):
             flaggor['fortsatt_drift'] = 1
         if 'kontrollbalans' in namn:
             flaggor['kontrollbalans'] = 1
+    # Version 3: regelverk, avskrivningstider i redovisningsprinciperna, och en striktare drift-flagga
+    sch = ' '.join(re.findall(r'schemaRef[^>]*href="([^"]+)"', xhtml)).lower()
+    flaggor['regelverk'] = 'K3' if '/k3/' in sch else 'K2' if '/k2/' in sch else ''
+    ar_text = []
+    for m in RE_NN.finditer(xhtml):
+        if (attr('name', m.group(1)) or '').endswith('AnlaggningstillgangNyttjandeperiod'):
+            ar_text += [float(x.replace(',', '.')) for x in re.findall(r'(\d+(?:[.,]\d+)?)\s*(?:år|ar)\b',
+                                                                          re.sub(r'<[^>]+>', ' ', m.group(2)).lower())]
+    ar_text = [x for x in ar_text if 0 < x <= 100]
+    flaggor['nyttjandeperiod_min'] = min(ar_text) if ar_text else ''
+    flaggor['nyttjandeperiod_max'] = max(ar_text) if ar_text else ''
     low = xhtml.lower()
     if 'kontrollbalansräkning' in low or 'kontrollbalansr&auml;kning' in low:
         flaggor['kontrollbalans'] = 1
@@ -110,6 +140,14 @@ def las(xhtml):
     for k, p in MON.items():
         flaggor[k] = len(re.findall(p, t))
     flaggor['txt_langd'] = len(t)
+    # "fortsatt drift" står i nästan varje K2-årsredovisning som standardtext. Bara en VÄSENTLIG OSÄKERHET räknas.
+    # Förnekande ("det föreligger inte någon väsentlig osäkerhet") räknas inte.
+    RE_OS = (r'väsentlig\w* osäkerhet\w*[^.]{0,250}(?:fortsatt drift|fortsätta (?:sin |sina |att bedriva )?verksamhet)'
+             r'|fortsatt drift[^.]{0,250}väsentlig\w* osäkerhet')
+    flaggor['osakerhet_drift'] = int(any(not re.search(r'\b(?:inte|ej|ingen|icke)\b', t[max(0, m.start() - 60):m.start()])
+                                         for m in re.finditer(RE_OS, t)))
+    flaggor['revisor_modifierad'] = int(bool(re.search(
+        r'uttalande med reservation|avstår från att göra ett uttalande|avstyrker|negativt uttalande', t)))
     return ut, flaggor
 
 
@@ -136,6 +174,7 @@ def main(src, manad, utfil):
                 continue
             v, fl = las(xhtml)
             tillskott = v.pop(('_tillskott', None), {})
+            nedskr = v.pop(('_nedskr', None), {})
             datum = sorted({d for (_, d) in v}, reverse=True)
             if not datum:
                 continue
@@ -151,6 +190,8 @@ def main(src, manad, utfil):
                 rad[f + '_f'] = v.get((f, forra), '') if forra else ''
             rad['Agartillskott'] = tillskott.get(nu, '')
             rad['Agartillskott_f'] = tillskott.get(forra, '') if forra else ''
+            rad['NedskrivningarAret'] = nedskr.get(nu, '')
+            rad['NedskrivningarAret_f'] = nedskr.get(forra, '') if forra else ''
             rad.update(fl)
             rader.append(rad)
     if not rader:

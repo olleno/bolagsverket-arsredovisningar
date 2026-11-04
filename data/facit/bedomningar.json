@@ -1,0 +1,201 @@
+{
+ "skapad": "2026-11-04",
+ "utfall": "konkurs inom 730 dagar efter bokslutsdagen",
+ "krav_for_att_halla": "minst 2.0 gånger basfrekvensen och minst 100 träffar i båda perioderna",
+ "perioder": {
+  "lara_2020_2021": {
+   "arsredovisningar": 329053,
+   "basfrekvens": 0.00308,
+   "regler": {
+    "negativt_ek_utan_upplysning": {
+     "traffar": 13117,
+     "konkurs_inom_2_ar": 0.02074,
+     "ganger_basfrekvensen": 6.73
+    },
+    "negativt_ek_med_upplysning": {
+     "traffar": 4340,
+     "konkurs_inom_2_ar": 0.02512,
+     "ganger_basfrekvensen": 8.15
+    },
+    "ek_under_halva_ak": {
+     "traffar": 7915,
+     "konkurs_inom_2_ar": 0.00821,
+     "ganger_basfrekvensen": 2.66
+    },
+    "forlust_tva_ar": {
+     "traffar": 54864,
+     "konkurs_inom_2_ar": 0.00607,
+     "ganger_basfrekvensen": 1.97
+    },
+    "ek_sjunkit_halften": {
+     "traffar": 22125,
+     "konkurs_inom_2_ar": 0.01008,
+     "ganger_basfrekvensen": 3.27
+    },
+    "kassa_under_5pct_kortfr": {
+     "traffar": 28585,
+     "konkurs_inom_2_ar": 0.01056,
+     "ganger_basfrekvensen": 3.43
+    },
+    "kundfordr_over_halva_oms": {
+     "traffar": 6029,
+     "konkurs_inom_2_ar": 0.00249,
+     "ganger_basfrekvensen": 0.81
+    },
+    "agartillskott": {
+     "traffar": 26831,
+     "konkurs_inom_2_ar": 0.00641,
+     "ganger_basfrekvensen": 2.08
+    },
+    "rekonstruktion_i_text": {
+     "traffar": 301,
+     "konkurs_inom_2_ar": 0.00664,
+     "ganger_basfrekvensen": 2.16
+    }
+   }
+  },
+  "prova_2022_2023": {
+   "arsredovisningar": 625361,
+   "basfrekvens": 0.00586,
+   "regler": {
+    "negativt_ek_utan_upplysning": {
+     "traffar": 21859,
+     "konkurs_inom_2_ar": 0.03477,
+     "ganger_basfrekvensen": 5.93
+    },
+    "negativt_ek_med_upplysning": {
+     "traffar": 7608,
+     "konkurs_inom_2_ar": 0.04692,
+     "ganger_basfrekvensen": 8.01
+    },
+    "ek_under_halva_ak": {
+     "traffar": 13056,
+     "konkurs_inom_2_ar": 0.01241,
+     "ganger_basfrekvensen": 2.12
+    },
+    "forlust_tva_ar": {
+     "traffar": 106510,
+     "konkurs_inom_2_ar": 0.01056,
+     "ganger_basfrekvensen": 1.8
+    },
+    "ek_sjunkit_halften": {
+     "traffar": 48155,
+     "konkurs_inom_2_ar": 0.01817,
+     "ganger_basfrekvensen": 3.1
+    },
+    "kassa_under_5pct_kortfr": {
+     "traffar": 56231,
+     "konkurs_inom_2_ar": 0.02065,
+     "ganger_basfrekvensen": 3.52
+    },
+    "kundfordr_over_halva_oms": {
+     "traffar": 10166,
+     "konkurs_inom_2_ar": 0.00738,
+     "ganger_basfrekvensen": 1.26
+    },
+    "agartillskott": {
+     "traffar": 54472,
+     "konkurs_inom_2_ar": 0.01335,
+     "ganger_basfrekvensen": 2.28
+    },
+    "rekonstruktion_i_text": {
+     "traffar": 597,
+     "konkurs_inom_2_ar": 0.03853,
+     "ganger_basfrekvensen": 6.57
+    }
+   }
+  }
+ },
+ "regler": [
+  {
+   "id": "negativt_ek_utan_upplysning",
+   "text": "Negativt eget kapital, men kapitalbristen nämns inte i årsredovisningen",
+   "grund": "ABL 25 kap. 13 §; ÅRL 6 kap. 1 §",
+   "haller": true,
+   "ganger_lara": 6.73,
+   "ganger_prova": 5.93,
+   "traffar_prova": 21859,
+   "konkurs_prova": 0.03477
+  },
+  {
+   "id": "negativt_ek_med_upplysning",
+   "text": "Negativt eget kapital, och kontrollbalansräkning nämns",
+   "grund": "ABL 25 kap. 13 §",
+   "haller": true,
+   "ganger_lara": 8.15,
+   "ganger_prova": 8.01,
+   "traffar_prova": 7608,
+   "konkurs_prova": 0.04692
+  },
+  {
+   "id": "ek_under_halva_ak",
+   "text": "Eget kapital över noll men under halva aktiekapitalet",
+   "grund": "ABL 25 kap. 13 § (ungefärlig: justerat eget kapital saknas i datan)",
+   "haller": true,
+   "ganger_lara": 2.66,
+   "ganger_prova": 2.12,
+   "traffar_prova": 13056,
+   "konkurs_prova": 0.01241
+  },
+  {
+   "id": "forlust_tva_ar",
+   "text": "Förlust två år i rad",
+   "grund": "Bedömning av fortsatt drift (ÅRL 2 kap. 4 §)",
+   "haller": false,
+   "ganger_lara": 1.97,
+   "ganger_prova": 1.8,
+   "traffar_prova": 106510,
+   "konkurs_prova": 0.01056
+  },
+  {
+   "id": "ek_sjunkit_halften",
+   "text": "Eget kapital har mer än halverats på ett år",
+   "grund": "Bedömning av fortsatt drift",
+   "haller": true,
+   "ganger_lara": 3.27,
+   "ganger_prova": 3.1,
+   "traffar_prova": 48155,
+   "konkurs_prova": 0.01817
+  },
+  {
+   "id": "kassa_under_5pct_kortfr",
+   "text": "Kassa och bank under 5 % av de kortfristiga skulderna",
+   "grund": "Bedömning av fortsatt drift",
+   "haller": true,
+   "ganger_lara": 3.43,
+   "ganger_prova": 3.52,
+   "traffar_prova": 56231,
+   "konkurs_prova": 0.02065
+  },
+  {
+   "id": "kundfordr_over_halva_oms",
+   "text": "Kundfordringar över halva årets omsättning (osäkra fordringar?)",
+   "grund": "K2 (BFNAR 2016:10) värdering av fordringar",
+   "haller": false,
+   "ganger_lara": 0.81,
+   "ganger_prova": 1.26,
+   "traffar_prova": 10166,
+   "konkurs_prova": 0.00738
+  },
+  {
+   "id": "agartillskott",
+   "text": "Ägartillskott under året",
+   "grund": "Tecken på kapitalbehov",
+   "haller": true,
+   "ganger_lara": 2.08,
+   "ganger_prova": 2.28,
+   "traffar_prova": 54472,
+   "konkurs_prova": 0.01335
+  },
+  {
+   "id": "rekonstruktion_i_text",
+   "text": "Rekonstruktion eller ackord nämns i texten",
+   "grund": "Lag (2022:964) om företagsrekonstruktion",
+   "haller": true,
+   "ganger_lara": 2.16,
+   "ganger_prova": 6.57,
+   "traffar_prova": 597,
+   "konkurs_prova": 0.03853
+  }
+ ]
+}
