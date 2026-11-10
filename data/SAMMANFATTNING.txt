@@ -1,9 +1,9 @@
-Hamtad 2026-11-05
-Manadsdelar: 806
-Arsredovisningar: 1117763
+Hamtad 2026-11-10
+Manadsdelar: 837
+Arsredovisningar: 1161511
 Misslyckade delar: 48
-     89 2020
-    120 2021
+     90 2020
+    131 2021
     162 2022
     207 2023
-    228 2024
+    247 2024
