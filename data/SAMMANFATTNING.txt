@@ -1,4 +1,4 @@
-Hamtad 2026-11-17
+Hamtad 2026-11-24
 Manadsdelar: 837
 Arsredovisningar: 1161511
 Misslyckade delar: 48
